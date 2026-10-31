@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10131c">
+  <title>Nova AI — умный помощник</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b0e15;--panel:#121724;--panel2:#191f2e;--line:#293247;--text:#f3f5fb;--muted:#929bb0;--accent:#8b6cff;--accent2:#5b8cff}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#202044 0,transparent 36%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif;height:100dvh}
+    button,textarea{font:inherit}button{cursor:pointer}
+    .app{height:100dvh;max-width:1100px;margin:auto;display:flex;flex-direction:column;padding:0 18px}
+    header{height:72px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff12;flex-shrink:0}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:750;font-size:18px;letter-spacing:.2px}
+    .logo{width:37px;height:37px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;box-shadow:0 6px 24px #755cff55}
+    .logo svg{width:22px}.status{font-size:12px;color:#aab4c8;background:#ffffff0b;border:1px solid #ffffff12;padding:6px 10px;border-radius:20px}
+    main{flex:1;min-height:0;display:flex;flex-direction:column}
+    .welcome{margin:auto;text-align:center;max-width:610px;padding:28px 10px}
+    .welcome .biglogo{width:66px;height:66px;margin:0 auto 20px;border-radius:22px;background:linear-gradient(135deg,#8b6cff,#4c8dff);display:grid;place-items:center;box-shadow:0 12px 45px #755cff40}
+    h1{font-size:clamp(27px,5vw,39px);line-height:1.15;margin:0 0 12px;letter-spacing:-1px}
+    .welcome p{color:var(--muted);margin:0 auto 25px;max-width:470px}
+    .suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}
+    .suggestion{background:#ffffff08;border:1px solid var(--line);border-radius:14px;padding:13px;color:#dce2f1;text-align:left;transition:.2s}
+    .suggestion:hover{border-color:#8b6cff88;background:#8b6cff12}
+    .suggestion b{display:block;font-size:13px;margin-bottom:3px}.suggestion span{font-size:12px;color:var(--muted)}
+    #messages{display:none;overflow:auto;padding:26px 4px 20px;flex:1;scroll-behavior:smooth}
+    .msg{display:flex;gap:12px;margin:0 auto 23px;max-width:790px;align-items:flex-start}
+    .avatar{width:31px;height:31px;flex:0 0 31px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:800;background:#272e42;color:#dce3ff}
+    .msg.assistant .avatar{background:linear-gradient(135deg,#8b6cff,#4c8dff);color:white}
+    .bubble{min-width:0;max-width:100%;padding:2px 0;color:#e8ebf4;white-space:pre-wrap;overflow-wrap:anywhere}
+    .msg.user .bubble{background:#1a2030;border:1px solid #2c354a;padding:11px 14px;border-radius:4px 15px 15px 15px}
+    .msg.assistant .bubble{padding-top:3px}
+    .bubble img{display:block;max-width:min(100%,360px);max-height:260px;object-fit:contain;border-radius:12px;margin:0 0 10px;border:1px solid var(--line)}
+    .typing{color:var(--muted);font-size:13px}
+    .composer-wrap{padding:12px 0 max(18px,env(safe-area-inset-bottom));flex-shrink:0}
+    .composer{max-width:820px;margin:auto;background:#151b29;border:1px solid #333d55;border-radius:20px;padding:10px 11px 9px;box-shadow:0 14px 45px #0004}
+    .preview{display:none;padding:3px 5px 10px}.preview img{height:70px;max-width:110px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.preview button{margin-left:9px;border:0;background:#ffffff15;color:white;border-radius:8px;padding:7px 10px}
+    textarea{width:100%;resize:none;max-height:170px;min-height:48px;border:0;outline:0;background:transparent;color:var(--text);padding:9px 8px}
+    textarea::placeholder{color:#7f899e}
+    .tools{display:flex;align-items:center;justify-content:space-between;padding:3px 2px 0}
+    .lefttools{display:flex;gap:7px;align-items:center}.iconbtn{width:38px;height:38px;border-radius:12px;border:1px solid #30394d;background:#20283a;color:#cbd3e5;display:grid;place-items:center}
+    .iconbtn:hover{background:#2b3550}.send{width:42px;height:42px;border:0;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;display:grid;place-items:center}
+    .send:disabled{opacity:.45;cursor:not-allowed}.hint{font-size:11px;color:#7d879c;padding:9px 5px 0;text-align:center}
+    #fileInput{display:none}.newchat{border:1px solid var(--line);background:#ffffff08;color:#cbd3e5;border-radius:10px;padding:8px 11px;font-size:12px}
+    @media(max-width:600px){.app{padding:0 12px}header{height:62px}.status{font-size:10px}.welcome{padding:20px 2px}.suggestions{grid-template-columns:1fr}.suggestion{padding:11px}.msg{gap:9px;margin-bottom:19px}.composer{border-radius:17px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z"/></svg></div>Nova AI</div>
+    <div style="display:flex;gap:9px;align-items:center"><span class="status">● Groq AI</span><button class="newchat" id="newChat">Новый чат</button></div>
+  </header>
+  <main>
+    <section class="welcome" id="welcome">
+      <div class="biglogo"><svg viewBox="0 0 24 24" width="34" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z"/></svg></div>
+      <h1>Чем могу помочь?</h1>
+      <p>Задавай вопросы, проси объяснить сложные темы или прикрепляй изображение — я постараюсь его понять.</p>
+      <div class="suggestions">
+        <button class="suggestion" data-prompt="Объясни простыми словами, как работает искусственный интеллект."><b>✨ Объяснить тему</b><span>Сложное — простым языком</span></button>
+        <button class="suggestion" data-prompt="Помоги придумать идею для интересного проекта на HTML."><b>💡 Придумать идею</b><span>Для сайта или проекта</span></button>
+        <button class="suggestion" data-prompt="Составь план изучения HTML и CSS для новичка."><b>💻 Помощь с кодом</b><span>HTML, CSS и JavaScript</span></button>
+        <button class="suggestion" data-prompt="Какие детали и объекты ты можешь распознать на загруженной картинке?"><b>🖼️ Изучить картинку</b><span>Опиши изображение</span></button>
+      </div>
+    </section>
+    <section id="messages" aria-live="polite"></section>
+  </main>
+  <div class="composer-wrap">
+    <div class="composer">
+      <div class="preview" id="preview"><img id="previewImg" alt="Предпросмотр"><button id="removeImage" type="button">Убрать фото ×</button></div>
+      <textarea id="prompt" rows="1" placeholder="Напиши сообщение..." aria-label="Сообщение"></textarea>
+      <div class="tools">
+        <div class="lefttools">
+          <button class="iconbtn" id="attach" title="Прикрепить изображение" aria-label="Прикрепить изображение"><svg width="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
+          <span style="font-size:11px;color:#8993a8">Можно прикрепить изображение</span>
+        </div>
+        <button class="send" id="send" aria-label="Отправить"><svg width="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>
+      </div>
+    </div>
+    <div class="hint">Ответы создаются ИИ и могут содержать ошибки. Не отправляй личные данные.</div>
+  </div>
+</div>
+<input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp">
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const welcome = $('welcome'), messagesEl = $('messages'), promptEl = $('prompt');
+  let history = [], imageData = null, busy = false, previewUrl = null;
+
+  function showChat(){welcome.style.display='none';messagesEl.style.display='block'}
+  function addMessage(role, text, image=null){
+    showChat();
+    const row=document.createElement('div'); row.className='msg '+role;
+    const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=role==='user'?'Т':'N';
+    const bubble=document.createElement('div');bubble.className='bubble';
+    if(image){const img=document.createElement('img');img.src=image;img.alt='Прикреплённое изображение';bubble.appendChild(img)}
+    if(text){const span=document.createElement('div');span.textContent=text;bubble.appendChild(span)}
+    row.append(avatar,bubble);messagesEl.appendChild(row);messagesEl.scrollTop=messagesEl.scrollHeight;return row;
+  }
+  function setImage(file){
+    if(!file)return;
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)){alert('Выбери изображение JPG, PNG или WEBP.');return}
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1280, scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        imageData=canvas.toDataURL('image/jpeg',.82);
+        $('previewImg').src=imageData;$('preview').style.display='flex';
+      };
+      img.src=reader.result;
+    };reader.readAsDataURL(file);
+  }
+  function clearImage(){imageData=null;$('preview').style.display='none';$('fileInput').value=''}
+  $('attach').onclick=()=>$('fileInput').click();
+  $('fileInput').onchange=e=>setImage(e.target.files[0]);
+  $('removeImage').onclick=clearImage;
+  $('newChat').onclick=()=>{history=[];messagesEl.innerHTML='';messagesEl.style.display='none';welcome.style.display='block';clearImage();promptEl.value='';promptEl.focus()};
+  document.querySelectorAll('.suggestion').forEach(b=>b.onclick=()=>{promptEl.value=b.dataset.prompt;promptEl.focus();send()});
+  promptEl.addEventListener('input',()=>{promptEl.style.height='auto';promptEl.style.height=Math.min(promptEl.scrollHeight,170)+'px'});
+  promptEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+  $('send').onclick=send;
+
+  async function send(){
+    const text=promptEl.value.trim();
+    if(busy||(!text&&!imageData))return;
+    const attached=imageData;
+    addMessage('user',text,attached);
+    const content = attached ? [{type:'text',text:text||'Опиши это изображение.'},{type:'image_url',image_url:{url:attached}}] : text;
+    history.push({role:'user',content});
+    promptEl.value='';promptEl.style.height='auto';clearImage();
+    busy=true;$('send').disabled=true;
+    const pending=addMessage('assistant','Думаю…');
+    pending.querySelector('.bubble').classList.add('typing');
+    try{
+      const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-12)})});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||'Ошибка сервера');
+      const answer=(data.reply||'Не удалось получить ответ.').trim();
+      pending.querySelector('.bubble').classList.remove('typing');
+      pending.querySelector('.bubble').textContent=answer;
+      history.push({role:'assistant',content:answer});
+    }catch(err){
+      pending.querySelector('.bubble').classList.remove('typing');
+      pending.querySelector('.bubble').textContent='Ошибка: '+err.message;
+      history.pop();
+    }finally{busy=false;$('send').disabled=false;messagesEl.scrollTop=messagesEl.scrollHeight;promptEl.focus()}
+  }
+})();
+</script>
+</body>
+</html>
